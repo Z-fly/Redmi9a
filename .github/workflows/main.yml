@@ -146,7 +146,7 @@ jobs:
           
           # 3. البناء مع flags التوافق
           echo "🔨 Building kernel..."
-          /usr/bin/time -v make -j$(nproc) \
+          /usr/bin/time -v make -j$(nproc) Image.gz-dtb \
             KCFLAGS="-fcommon -w -O2" \
             HOSTCFLAGS="-fcommon -w" \
             CFLAGS_MODULE="-fno-pic"

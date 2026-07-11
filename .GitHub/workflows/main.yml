@@ -25,6 +25,12 @@ jobs:
             flex \
             bison \
             libelf-dev \
+            libc6-i386 \
+            lib32z1 \
+            lib32stdc++6 \
+            lib32gcc-s1 \
+            libtinfo5 \
+            file \
             python2 \
             git-core \
             curl \
@@ -79,6 +85,12 @@ jobs:
           
           echo "✅ Toolchains ready:"
           ls -la toolchain-*/bin/* | head -10
+
+          echo "🔎 Verifying cross-compiler executables..."
+          file toolchain-64/bin/aarch64-linux-android-gcc
+          file toolchain-32/bin/arm-linux-androideabi-gcc
+          toolchain-64/bin/aarch64-linux-android-gcc --version | head -1
+          toolchain-32/bin/arm-linux-androideabi-gcc --version | head -1
 
       - name: Apply Critical Fixes
         run: |

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  inspect_and_build:
+  build:
     runs-on: ubuntu-20.04
 
     steps:

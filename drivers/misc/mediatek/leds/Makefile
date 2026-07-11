@@ -11,6 +11,7 @@
 # GNU General Public License for more details.
 #
 
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/leds
 ifeq (y, $(filter y, $(CONFIG_MACH_MT6765) $(CONFIG_MACH_MT6761)))
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/leds/mt6765
 else

@@ -11,6 +11,7 @@
 # GNU General Public License for more details.
 #
 
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/smi
 ifneq ($(CONFIG_MTK_SMI_VARIANT),y)
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/m4u/$(MTK_PLATFORM)/

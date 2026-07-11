@@ -15,6 +15,7 @@
 # Makefile for external display driver.
 #
 
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/ext_disp/$(MTK_PLATFORM)
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/ \
              -I$(srctree)/drivers/misc/mediatek/ext_disp/  \
              -I$(srctree)/drivers/misc/mediatek/ext_disp/include/  \

@@ -128,11 +128,13 @@ jobs:
           # إعداد متغيرات البيئة
           export ARCH=arm64
           export SUBARCH=arm64
+          export MTK_PLATFORM=mt6765
           export CROSS_COMPILE=$(pwd)/toolchain-64/bin/aarch64-linux-android-
           export CROSS_COMPILE_ARM32=$(pwd)/toolchain-32/bin/arm-linux-androideabi-
           
           echo "📊 Build Environment:"
           echo "  ARCH: $ARCH"
+          echo "  MTK_PLATFORM: $MTK_PLATFORM"
           echo "  CROSS_COMPILE: $CROSS_COMPILE"
           echo "  CROSS_COMPILE_ARM32: $CROSS_COMPILE_ARM32"
           

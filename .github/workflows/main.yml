@@ -31,6 +31,7 @@ jobs:
             lib32gcc-s1 \
             libtinfo5 \
             file \
+            time \
             python2 \
             git-core \
             curl \
@@ -145,7 +146,7 @@ jobs:
           
           # 3. البناء مع flags التوافق
           echo "🔨 Building kernel..."
-          time make -j$(nproc) \
+          /usr/bin/time -v make -j$(nproc) \
             KCFLAGS="-fcommon -w -O2" \
             HOSTCFLAGS="-fcommon -w" \
             CFLAGS_MODULE="-fno-pic"

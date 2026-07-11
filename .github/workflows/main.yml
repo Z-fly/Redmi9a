@@ -48,17 +48,17 @@ jobs:
           echo "📁 File: arch/arm64/configs/dandelion_defconfig"
           echo "📊 Total lines: $(wc -l < arch/arm64/configs/dandelion_defconfig)"
           echo ""
-          
+
           # تحليل الـ defconfig
           echo "🔍 Key Configurations Found:"
           echo "----------------------------"
           grep -E "^(CONFIG_WERROR|CONFIG_ARM64|CONFIG_CPU|CONFIG_ARCH|CONFIG_COMPAT|CONFIG_MODULES)" arch/arm64/configs/dandelion_defconfig || true
-          
+
           echo ""
           echo "📋 Full Defconfig Content:"
           echo "=========================="
           cat arch/arm64/configs/dandelion_defconfig
-          
+
           echo ""
           echo "⚠️ WARNING Check:"
           echo "----------------"
@@ -71,19 +71,19 @@ jobs:
       - name: Download Toolchains
         run: |
           echo "📥 Downloading toolchains..."
-          
+
           # 64-bit toolchain (مهم)
           if [ ! -d "toolchain-64" ]; then
             git clone --depth=1 --branch lineage-19.1 \
               https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 toolchain-64
           fi
-          
+
           # 32-bit toolchain (مهم جداً لـ MediaTek)
           if [ ! -d "toolchain-32" ]; then
             git clone --depth=1 --branch lineage-19.1 \
               https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 toolchain-32
           fi
-          
+
           echo "✅ Toolchains ready:"
           ls -la toolchain-*/bin/* | head -10
 
@@ -96,24 +96,24 @@ jobs:
       - name: Apply Critical Fixes
         run: |
           echo "🔧 Applying critical source fixes..."
-          
+
           # 1. إصلاح مشكلة yylloc (السبب الرئيسي للفشل)
           if [ -f "scripts/dtc/dtc-lexer.lex.c_shipped" ]; then
             echo "Fixing yylloc in dtc-lexer.lex.c_shipped..."
             sed -i 's/^YYLTYPE yylloc;/extern YYLTYPE yylloc;/' scripts/dtc/dtc-lexer.lex.c_shipped
           fi
-          
+
           if [ -f "scripts/dtc/dtc-parser.tab.c_shipped" ]; then
             echo "Fixing yylloc in dtc-parser.tab.c_shipped..."
             sed -i 's/^YYLTYPE yylloc;/extern YYLTYPE yylloc;/' scripts/dtc/dtc-parser.tab.c_shipped
           fi
-          
+
           # 2. تعطيل CONFIG_WERROR في الـ defconfig
           if [ -f "arch/arm64/configs/dandelion_defconfig" ]; then
             echo "Disabling CONFIG_WERROR..."
             sed -i 's/CONFIG_WERROR=y/CONFIG_WERROR=n/' arch/arm64/configs/dandelion_defconfig
           fi
-          
+
           # 3. إصلاحات توافق GCC
           echo "Applying GCC compatibility fixes..."
           find . -name "*.c" -type f -exec grep -l "__attribute__((weak))" {} \; 2>/dev/null | \
@@ -124,35 +124,33 @@ jobs:
       - name: Configure and Build Kernel
         run: |
           echo "🚀 Starting kernel build process..."
-          
+
           # إعداد متغيرات البيئة
           export ARCH=arm64
           export SUBARCH=arm64
-          export MTK_PLATFORM=mt6765
           export CROSS_COMPILE=$(pwd)/toolchain-64/bin/aarch64-linux-android-
           export CROSS_COMPILE_ARM32=$(pwd)/toolchain-32/bin/arm-linux-androideabi-
-          
+
           echo "📊 Build Environment:"
           echo "  ARCH: $ARCH"
-          echo "  MTK_PLATFORM: $MTK_PLATFORM"
           echo "  CROSS_COMPILE: $CROSS_COMPILE"
           echo "  CROSS_COMPILE_ARM32: $CROSS_COMPILE_ARM32"
-          
+
           # 1. تحميل الـ defconfig
           echo "📝 Loading defconfig..."
           make dandelion_defconfig
-          
+
           # 2. عرض الـ config الناتج
           echo "📋 Running config:"
           grep -E "^(CONFIG_WERROR|CONFIG_ARM64|CONFIG_CPU|CONFIG_MODULES)" .config || true
-          
+
           # 3. البناء مع flags التوافق
           echo "🔨 Building kernel..."
           /usr/bin/time -v make -j$(nproc) Image.gz-dtb \
             KCFLAGS="-fcommon -w -O2" \
             HOSTCFLAGS="-fcommon -w" \
             CFLAGS_MODULE="-fno-pic"
-          
+
           # 4. التحقق من الناتج
           echo "✅ Build completed. Checking outputs..."
           if [ -f "arch/arm64/boot/Image.gz-dtb" ]; then
@@ -170,12 +168,12 @@ jobs:
         run: |
           echo "📊 Build Analysis Report"
           echo "========================"
-          
+
           # تحليل حجم المخرجات
           if [ -f "arch/arm64/boot/Image.gz-dtb" ]; then
             echo "📦 Kernel size: $(ls -lh arch/arm64/boot/Image.gz-dtb | awk '{print $5}')"
           fi
-          
+
           # تحليل ملف الـ config النهائي
           if [ -f ".config" ]; then
             echo ""
@@ -195,6 +193,45 @@ jobs:
           git clone --depth=1 https://github.com/osm0sis/AnyKernel3 "$AK3_DIR"
 
           cp arch/arm64/boot/Image.gz-dtb "$AK3_DIR/"
+
+          cat > "$AK3_DIR/anykernel.sh" <<'EOF'
+          ### AnyKernel3 Ramdisk Mod Script
+          ### Redmi 9A / blossom family kernel installer
+
+          properties() { '
+          kernel.string=Redmi9a dandelion kernel
+          do.devicecheck=1
+          do.modules=0
+          do.systemless=1
+          do.cleanup=1
+          do.cleanuponabort=0
+          device.name1=dandelion
+          device.name2=angelica
+          device.name3=angelican
+          device.name4=cattail
+          device.name5=angelicain
+          device.name6=blossom
+          device.name7=garden
+          supported.versions=
+          supported.patchlevels=
+          supported.vendorpatchlevels=
+          '; }
+
+          boot_attributes() {
+            set_perm_recursive 0 0 755 644 $RAMDISK/*;
+            set_perm_recursive 0 0 750 750 $RAMDISK/init* $RAMDISK/sbin;
+          }
+
+          BLOCK=boot;
+          IS_SLOT_DEVICE=0;
+          RAMDISK_COMPRESSION=auto;
+          PATCH_VBMETA_FLAG=auto;
+
+          . tools/ak3-core.sh;
+
+          dump_boot;
+          write_boot;
+          EOF
 
           (
             cd "$AK3_DIR"
